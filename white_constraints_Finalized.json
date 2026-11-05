@@ -1,0 +1,286 @@
+{
+  "constraint_model_version": "5.1",
+  "model_assumptions": [
+    "vehicle_movement_status and other_vehicles_movement_status represent the primary movement at the same scenario instant.",
+    "All status and movement fields in one row describe the same scenario instant.",
+    "vehicle_movement_status does not contain a stationary or none value.",
+    "other_vehicles_movement_status does not contain a stationary or none value.",
+    "Stop and Park have no compatible vehicle_movement_status value and are therefore excluded from generated valid patterns.",
+    "Stopped (with brake lights on) and Parked (without brake lights) have no compatible other_vehicles_movement_status value and are therefore excluded from generated valid patterns.",
+    "Cruise, deceleration, and slow down represent active vehicle operating states.",
+    "Lane change (right) represents a conventional movement into an available right-side lane.",
+    "Parking scenarios do not use conventional lane-change behavior or roadway lane-transition shapes.",
+    "Divergence (one lane in each direction) does not provide an available same-direction right lane for a conventional lane change.",
+    "The value 'No other vehicles besides my own.' means that no vehicle is ahead in the ego vehicle's lane. It does not mean that no vehicle exists behind or in an adjacent area.",
+    "adjacent_vehicles_behind indicates that one or more vehicles are positioned adjacent to and behind the ego vehicle. It does not imply that those vehicles are approaching, leaving, or moving.",
+    "The sign value 'pause' is interpreted as a stop sign, and the scenario row represents the ego vehicle's response at the sign.",
+    "Other-vehicle operation and movement fields require at least one surrounding vehicle represented by an ahead or adjacent vehicle-presence dimension.",
+    "vehicles_behind_in_same_lane is excluded from surrounding-vehicle presence evaluation because its only available value is Nothing.",
+    "function_linkage is not present in the updated dimension table."
+  ],
+  "exclude_dimensions": [
+    "function_linkage"
+  ],
+  "normalize_values": {},
+  "ignore_values": {},
+  "rules": [
+    {
+      "id": "C01",
+      "name": "A stopped other vehicle cannot have a moving status.",
+      "type": "exclude",
+      "when": {
+        "other_vehicles_in_operation": "Stopped (with brake lights on)"
+      },
+      "exclude": {
+        "other_vehicles_movement_status": [
+          "forward",
+          "Turn right",
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A stopped vehicle cannot simultaneously move forward, turn, or change lanes. Because no stationary movement value exists, all stopped-other-vehicle patterns are excluded."
+    },
+    {
+      "id": "C02",
+      "name": "A stopped ego vehicle cannot have a moving status.",
+      "type": "exclude",
+      "when": {
+        "vehicle_driving_status": "Stop"
+      },
+      "exclude": {
+        "vehicle_movement_status": [
+          "forward",
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A stopped ego vehicle cannot simultaneously move forward or change lanes. Because no stationary movement value exists, all ego Stop patterns are excluded."
+    },
+    {
+      "id": "C03",
+      "name": "Parking cannot contain road lane-transition shapes.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "parking"
+      },
+      "exclude": {
+        "road_shape": [
+          "Lane reduction (merging) within your own lane",
+          "Lane increase"
+        ]
+      },
+      "reason": "Lane reduction and lane increase are roadway transition structures, not valid parking road shapes in this model."
+    },
+    {
+      "id": "C04",
+      "name": "Divergence does not support a conventional ego right lane change.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "Divergence (one lane in each direction)"
+      },
+      "exclude": {
+        "vehicle_movement_status": [
+          "Lane change (right)"
+        ]
+      },
+      "reason": "The divergence provides no available same-direction right lane for a conventional lane change."
+    },
+    {
+      "id": "C05",
+      "name": "Divergence does not support another vehicle's conventional right lane change.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "Divergence (one lane in each direction)"
+      },
+      "exclude": {
+        "other_vehicles_movement_status": [
+          "Lane change (right)"
+        ]
+      },
+      "reason": "The configured divergence provides no available same-direction right lane for another vehicle."
+    },
+    {
+      "id": "C06",
+      "name": "A parked ego vehicle cannot have a moving status.",
+      "type": "exclude",
+      "when": {
+        "vehicle_driving_status": "Park"
+      },
+      "exclude": {
+        "vehicle_movement_status": [
+          "forward",
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A parked ego vehicle cannot simultaneously move forward or change lanes. Because no stationary movement value exists, all ego Park patterns are excluded."
+    },
+    {
+      "id": "C07",
+      "name": "A parked other vehicle cannot have a moving status.",
+      "type": "exclude",
+      "when": {
+        "other_vehicles_in_operation": "Parked (without brake lights)"
+      },
+      "exclude": {
+        "other_vehicles_movement_status": [
+          "forward",
+          "Turn right",
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A parked other vehicle cannot simultaneously move, turn, or change lanes. Because no stationary movement value exists, all parked-other-vehicle patterns are excluded."
+    },
+    {
+      "id": "C08",
+      "name": "Cruise is not valid in the parking environment.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "parking"
+      },
+      "exclude": {
+        "vehicle_driving_status": [
+          "cruise"
+        ]
+      },
+      "reason": "Cruise represents normal continuous road driving and is excluded from the parking environment in this model."
+    },
+    {
+      "id": "C09",
+      "name": "Another vehicle cannot be in cruise operation in the parking environment.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "parking"
+      },
+      "exclude": {
+        "other_vehicles_in_operation": [
+          "cruise"
+        ]
+      },
+      "reason": "Other vehicles in parking environments should use low-speed, stopping, or parking behavior rather than cruise."
+    },
+    {
+      "id": "C10",
+      "name": "A conventional ego right lane change is not valid in the parking environment.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "parking"
+      },
+      "exclude": {
+        "vehicle_movement_status": [
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A parking maneuver is not represented as a conventional lane change in the available dimension values."
+    },
+    {
+      "id": "C11",
+      "name": "Another vehicle cannot perform a conventional right lane change in the parking environment.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "parking"
+      },
+      "exclude": {
+        "other_vehicles_movement_status": [
+          "Lane change (right)"
+        ]
+      },
+      "reason": "A parking maneuver by another vehicle should not be represented as a conventional lane change."
+    },
+    {
+      "id": "C12",
+      "name": "Divergence cannot contain lane-transition road shapes.",
+      "type": "exclude",
+      "when": {
+        "road_environment": "Divergence (one lane in each direction)"
+      },
+      "exclude": {
+        "road_shape": [
+          "Lane reduction (merging) within your own lane",
+          "Lane increase"
+        ]
+      },
+      "reason": "A divergence with one lane in each direction does not support lane reduction or lane increase within the same scenario segment."
+    },
+    {
+      "id": "C13",
+      "name": "A pause sign cannot be paired with an uninterrupted cruise state.",
+      "type": "exclude",
+      "when": {
+        "sign": "pause"
+      },
+      "exclude": {
+        "vehicle_driving_status": [
+          "cruise"
+        ]
+      },
+      "reason": "Under the assumption that pause means a stop sign and the row represents compliance at the sign, uninterrupted cruise is inconsistent."
+    },
+    {
+      "id": "C14",
+      "name": "Lane increase is incompatible with a stopped or parked ego vehicle.",
+      "type": "exclude",
+      "when": {
+        "road_shape": "Lane increase"
+      },
+      "exclude": {
+        "vehicle_driving_status": [
+          "Stop",
+          "Park"
+        ]
+      },
+      "reason": "Lane-increase scenarios represent a moving-traffic context and are incompatible with a stopped or parked ego-vehicle state in this model."
+    },
+    {
+      "id": "C15",
+      "name": "Other-vehicle status and movement require at least one surrounding vehicle.",
+      "type": "exclude",
+      "when": {
+        "number_of_vehicles_ahead_in_my_lane": "No other vehicles besides my own.",
+        "number_of_adjacent_vehicles_in_front_of_my_vehicle": "Nothing",
+        "whether_there_are_vehicles_approaching_or_leaving_behind_your_vehicle": "Nothing"
+      },
+      "exclude": {
+        "other_vehicles_in_operation": [
+          "cruise",
+          "deceleration",
+          "slow down",
+          "Stopped (with brake lights on)",
+          "Park (without brake lights on)"
+        ],
+        "other_vehicles_movement_status": [
+          "forward",
+          "Turn right",
+          "Lane change (right)"
+        ]
+      },
+      "reason": "Other vehicle operation and movement are not applicable when no surrounding vehicle exists."
+    },
+    {
+      "id": "C16",
+      "name": "One car ahead cannot use the bicycle or motorcycle object classification.",
+      "type": "exclude",
+      "when": {
+        "number_of_vehicles_ahead_in_my_lane": "One car in front of my car"
+      },
+      "exclude": {
+        "object_types": [
+          "Bicycles and motorcycles (0-3 units)"
+        ]
+      },
+      "reason": "The object ahead is explicitly classified as a car, so an exclusive bicycle or motorcycle classification is inconsistent."
+    },
+    {
+      "id": "C17",
+      "name": "Two or more cars ahead cannot use the bicycle or motorcycle object classification.",
+      "type": "exclude",
+      "when": {
+        "number_of_vehicles_ahead_in_my_lane": "Two or more cars in front of your vehicle"
+      },
+      "exclude": {
+        "object_types": [
+          "Bicycles and motorcycles (0-3 units)"
+        ]
+      },
+      "reason": "The objects ahead are explicitly classified as cars, so an exclusive bicycle or motorcycle classification is inconsistent."
+    }
+  ]
+}
