@@ -1,5 +1,6 @@
+
 {
-  "constraint_model_version": "5.1",
+  "zconstraint_model_version": "5.1",
   "model_assumptions": [
     "vehicle_movement_status and other_vehicles_movement_status represent the primary movement at the same scenario instant.",
     "All status and movement fields in one row describe the same scenario instant.",
